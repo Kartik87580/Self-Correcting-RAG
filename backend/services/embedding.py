@@ -3,8 +3,6 @@ Embedding service.
 Logic from Notebook 3 — SentenceTransformer model.
 """
 
-from sentence_transformers import SentenceTransformer
-
 # Same model from Notebook 3 / 4
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -12,10 +10,11 @@ MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 _model = None
 
 
-def get_embedding_model() -> SentenceTransformer:
+def get_embedding_model():
     """Return the singleton embedding model."""
     global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(MODEL_NAME)
     return _model
 
