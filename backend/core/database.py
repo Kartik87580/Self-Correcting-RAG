@@ -20,6 +20,8 @@ if DATABASE_URL:
         DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
     elif DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+else:
+    raise RuntimeError("DATABASE_URL environment variable is missing. Please set it in Render Env Vars.")
 
 # Ensure it uses postgresql+asyncpg for asyncpg driver
 engine = create_async_engine(DATABASE_URL, echo=False, connect_args=connect_args)
