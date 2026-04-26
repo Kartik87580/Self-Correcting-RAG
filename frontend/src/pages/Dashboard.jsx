@@ -75,7 +75,7 @@ export default function Dashboard() {
         <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-subtle bg-surface/60 backdrop-blur-md relative z-30 shadow-sm">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Logo"
               className="w-8 h-8 rounded-lg shadow-md shadow-indigo-500/10 object-cover"
             />

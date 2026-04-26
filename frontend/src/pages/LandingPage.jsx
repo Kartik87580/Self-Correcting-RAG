@@ -8,7 +8,7 @@ export default function LandingPage() {
             <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
                 <div className="flex items-center gap-3">
                     <img
-                        src="/logo.png"
+                        src="/logo.svg"
                         alt="Logo"
                         className="w-10 h-10 rounded-xl shadow-lg shadow-indigo-500/20 object-cover"
                     />

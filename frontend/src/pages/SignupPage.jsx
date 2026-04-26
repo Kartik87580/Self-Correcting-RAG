@@ -42,7 +42,7 @@ export default function SignupPage() {
                 {/* Logo */}
                 <div className="flex items-center justify-center gap-3 mb-8">
                     <img
-                        src="/logo.png"
+                        src="/logo.svg"
                         alt="Logo"
                         className="w-11 h-11 rounded-xl shadow-lg shadow-indigo-500/20 object-cover"
                     />
