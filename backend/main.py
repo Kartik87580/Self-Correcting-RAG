@@ -6,6 +6,7 @@ Main entry point — run with: uvicorn main:app --reload
 import os
 import sys
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 if sys.platform == "win32":
@@ -14,6 +15,8 @@ if sys.platform == "win32":
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# NOTE: Router imports are lightweight — heavy ML models inside them
+# use lazy imports so they don't load until first request.
 from api.ingest import router as ingest_router
 from api.query import router as query_router
 from api.graph import router as graph_router
@@ -21,16 +24,22 @@ from api.auth import router as auth_router
 from api.chats import router as chats_router
 from api.documents import router as documents_router
 
-from core.database import engine
-from models import User, Chat, ChatMessage, Document  # noqa: F401 — registers all tables
-from core.database import Base
+from core.database import engine, Base
+from models import User, Chat, ChatMessage, Document  # noqa: F401
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables if they don't exist, using async engine
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Create tables with a timeout (Neon cold starts can be slow)
+    try:
+        async with asyncio.timeout(30):
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ Database tables ready")
+    except Exception as e:
+        logger.warning(f"⚠️ DB table creation issue (non-fatal): {e}")
     yield
 
 

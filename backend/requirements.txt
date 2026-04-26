@@ -10,6 +10,7 @@ docling
 beautifulsoup4
 requests
 youtube-transcript-api
+lxml
 
 # LLM & RAG
 langchain-core
@@ -19,8 +20,8 @@ langchain-community
 langgraph
 groq
 
-# Embeddings & Vector store
-sentence-transformers
+# Embeddings & Vector store (FastEmbed = lightweight ONNX, no PyTorch)
+fastembed
 qdrant-client
 
 # Tavily web search
@@ -29,7 +30,6 @@ tavily-python
 # Database
 sqlalchemy
 asyncpg
-psycopg2-binary
 
 # Validation
 email-validator

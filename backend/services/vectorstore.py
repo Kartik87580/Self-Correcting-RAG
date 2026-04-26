@@ -1,6 +1,6 @@
 """
 Vector store service.
-Supports both legacy global collection AND per-chat collections.
+Supports per-user KB collections.
 """
 
 import os
@@ -11,8 +11,6 @@ from qdrant_client.models import VectorParams, Distance, PointStruct
 from dotenv import load_dotenv
 
 load_dotenv()
-
-from services.embedding import encode_documents, encode_query
 
 # Default (legacy) collection
 COLLECTION_NAME = "documents"
@@ -57,10 +55,12 @@ def reset_collection(collection_name: str = COLLECTION_NAME):
 
 
 def store_chunks(chunks: List[str], collection_name: str = COLLECTION_NAME):
-    """Encode chunks and store them in Qdrant (legacy global)."""
+    """Encode chunks and store them in Qdrant."""
     _ensure_collection(collection_name)
     client = get_client()
 
+    # Lazy import to avoid loading at startup
+    from services.embedding import encode_documents
     emd_docs = encode_documents(chunks)
 
     points = [
@@ -86,6 +86,7 @@ def query_vectors(query: str, limit: int = 3, collection_name: str = COLLECTION_
     _ensure_collection(collection_name)
     client = get_client()
 
+    from services.embedding import encode_query
     query_vector = encode_query(query)
 
     results = client.query_points(

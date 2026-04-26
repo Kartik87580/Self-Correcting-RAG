@@ -17,7 +17,6 @@ from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 from langchain_community.tools.tavily_search import TavilySearchResults
 
-from services.embedding import get_embedding_model
 from services.vectorstore import query_vectors
 
 load_dotenv()
@@ -73,8 +72,9 @@ _active_collection: str = "documents"
 # -------------------------------------------------------------------
 def retrieve_node(state: State) -> State:
     q = state["question"]
-    emd_model = get_embedding_model()
-    query_vector = emd_model.encode_query(q)
+
+    from services.embedding import encode_query
+    query_vector = encode_query(q)
 
     from services.vectorstore import get_client
     client = get_client()
