@@ -39,9 +39,11 @@ export default function SigninPage() {
             <div className="w-full max-w-md relative z-10">
                 {/* Logo */}
                 <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                        <Cpu size={20} className="text-white" />
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Logo"
+                        className="w-11 h-11 rounded-xl shadow-lg shadow-indigo-500/20 object-cover"
+                    />
                     <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                         CRAG Pipeline
                     </span>

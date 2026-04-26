@@ -74,9 +74,11 @@ export default function Dashboard() {
         {/* ── Top bar ──────────────────────────────── */}
         <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-subtle bg-surface/60 backdrop-blur-md relative z-30 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Cpu size={18} className="text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="w-8 h-8 rounded-lg shadow-md shadow-indigo-500/10 object-cover"
+            />
             <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               CRAG Pipeline
             </h1>
