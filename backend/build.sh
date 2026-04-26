@@ -2,9 +2,10 @@
 # exit on error
 set -o errexit
 
-# Upgrade pip
+echo "--- Upgrading Pip ---"
 python -m pip install --upgrade pip
 
-# Install dependencies
-# We use --prefer-binary to avoid building rust crates from source when possible
-pip install --prefer-binary -r requirements.txt
+echo "--- Installing Dependencies (Binary Only) ---"
+# --only-binary=:all: ensures we never try to compile from source.
+# If a package doesn't have a wheel for the current python version, this will fail fast.
+pip install --only-binary=:all: -r requirements.txt
