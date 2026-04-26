@@ -63,6 +63,12 @@ class State(TypedDict):
 
 
 # -------------------------------------------------------------------
+# Active collection (set per-run for chat isolation)
+# -------------------------------------------------------------------
+_active_collection: str = "documents"
+
+
+# -------------------------------------------------------------------
 # Retrieve node
 # -------------------------------------------------------------------
 def retrieve_node(state: State) -> State:
@@ -70,10 +76,10 @@ def retrieve_node(state: State) -> State:
     emd_model = get_embedding_model()
     query_vector = emd_model.encode_query(q)
 
-    from services.vectorstore import get_client, COLLECTION_NAME
+    from services.vectorstore import get_client
     client = get_client()
     results = client.query_points(
-        collection_name=COLLECTION_NAME,
+        collection_name=_active_collection,
         query=query_vector,
         limit=RET_LIMIT
     )
@@ -347,13 +353,14 @@ def get_crag_graph():
 _last_run_node_states: Dict[str, Dict[str, Any]] = {}
 
 
-def run_crag_pipeline(question: str) -> dict:
+def run_crag_pipeline(question: str, collection_name: str = "documents") -> dict:
     """
     Run the CRAG pipeline and return the final state.
     Tracks input/output states of each node.
     """
-    global _last_run_node_states
+    global _last_run_node_states, _active_collection
     _last_run_node_states = {}
+    _active_collection = collection_name
 
     graph = get_crag_graph()
 

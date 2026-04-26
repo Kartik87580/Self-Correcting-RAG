@@ -1,35 +1,23 @@
 import axios from 'axios';
 
+// In production, API calls go directly to the backend URL.
+// In development, Vite proxy handles /api → localhost:8000
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 120000,
+});
+
+// Attach token from localStorage on every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // ── Health ─────────────────────────────────────
 export const checkHealth = () => api.get('/health');
-
-// ── Ingest ─────────────────────────────────────
-export const ingestFile = (file, type) => {
-  const form = new FormData();
-  form.append('file', file);
-  if (type) form.append('source_type', type);
-  return api.post('/ingest', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-};
-
-export const ingestURL = (url, type) => {
-  const form = new FormData();
-  form.append('url', url);
-  if (type) form.append('source_type', type);
-  return api.post('/ingest', form);
-};
-
-// ── Query ──────────────────────────────────────
-export const queryPipeline = (question) =>
-  api.post('/query', { question });
-
-export const getQueryHistory = () => api.get('/history');
 
 // ── Graph structure ────────────────────────────
 export const getGraphNodes = () => api.get('/graph/nodes');

@@ -1,0 +1,13 @@
+{
+    "build": {
+        "env": {
+            "VITE_API_URL": "@backend_url"
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

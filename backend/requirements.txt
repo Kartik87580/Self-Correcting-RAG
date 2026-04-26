@@ -25,3 +25,15 @@ qdrant-client
 
 # Tavily web search
 tavily-python
+
+# Database
+sqlalchemy
+asyncpg
+psycopg2-binary
+
+# Validation
+email-validator
+
+# Auth
+bcrypt
+python-jose[cryptography]

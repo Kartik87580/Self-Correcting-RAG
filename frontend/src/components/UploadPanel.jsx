@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { Upload, Link, Loader2, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
-import { ingestFile, ingestURL } from '../services/api';
+import api from '../services/api';
 
-export default function UploadPanel({ onIngested }) {
+export default function UploadPanel({ onIngested, chatId }) {
   const [ingestType, setIngestType] = useState('simple_pdf');
   const [url, setUrl] = useState('');
   const [file, setFile] = useState(null);
@@ -13,14 +13,23 @@ export default function UploadPanel({ onIngested }) {
   const isFileMode = ['simple_pdf', 'ocr_pdf', 'txt', 'audio'].includes(ingestType);
 
   const handleProcess = async () => {
+    if (!chatId) return;
     setStatus('loading');
     setMessage('Processing...');
     try {
       let res;
       if (isFileMode && file) {
-        res = await ingestFile(file, ingestType);
+        const form = new FormData();
+        form.append('file', file);
+        form.append('source_type', ingestType);
+        res = await api.post(`/chats/${chatId}/ingest`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
       } else if (!isFileMode && url.trim()) {
-        res = await ingestURL(url.trim(), ingestType);
+        const form = new FormData();
+        form.append('url', url.trim());
+        form.append('source_type', ingestType);
+        res = await api.post(`/chats/${chatId}/ingest`, form);
       } else {
         setStatus('error');
         setMessage(isFileMode ? 'Please provide a file.' : 'Please provide a URL.');

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Loader2, MessageSquare, BookOpen, Sparkles, History, ChevronDown, ChevronUp } from 'lucide-react';
-import { queryPipeline, getQueryHistory } from '../services/api';
+import api from '../services/api';
 
-export default function QueryPanel({ onQueryResult, isIngested }) {
+export default function QueryPanel({ onQueryResult, isIngested, chatId }) {
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -12,12 +12,13 @@ export default function QueryPanel({ onQueryResult, isIngested }) {
   const inputRef = useRef();
 
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    if (chatId) fetchHistory();
+  }, [chatId]);
 
   const fetchHistory = async () => {
+    if (!chatId) return;
     try {
-      const res = await getQueryHistory();
+      const res = await api.get(`/chats/${chatId}/history`);
       setHistory(res.data);
     } catch (err) {
       console.error('Failed to fetch history', err);
@@ -32,7 +33,7 @@ export default function QueryPanel({ onQueryResult, isIngested }) {
     onQueryResult?.({ status: 'running' });
 
     try {
-      const res = await queryPipeline(question.trim());
+      const res = await api.post(`/chats/${chatId}/query`, { question: question.trim() });
       setResult(res.data);
       onQueryResult?.({ status: 'done', data: res.data });
       fetchHistory(); // Refresh history after new query
@@ -170,7 +171,7 @@ function HistoryItem({ item }) {
       >
         <div className="flex-1 min-w-0">
           <p className="text-xs text-txt font-medium truncate">{item.question}</p>
-          <p className="text-[10px] text-txt-muted mt-0.5">{new Date(item.timestamp).toLocaleString()}</p>
+          <p className="text-[10px] text-txt-muted mt-0.5">{new Date(item.created_at).toLocaleString()}</p>
         </div>
         {expanded ? <ChevronUp size={14} className="mt-1" /> : <ChevronDown size={14} className="mt-1" />}
       </button>

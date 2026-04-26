@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { Cpu, Zap } from 'lucide-react';
-import UploadPanel from '../components/UploadPanel';
+import { Cpu, Zap, Database } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 import GraphViewer from '../components/GraphViewer';
 import QueryPanel from '../components/QueryPanel';
 
@@ -9,13 +9,18 @@ const EXEC_ORDER_CORRECT = ['retrieve', 'eval_each_doc', 'refine', 'generate'];
 const EXEC_ORDER_WEB = ['retrieve', 'eval_each_doc', 'rewrite_query', 'web_search', 'refine', 'generate'];
 
 export default function Dashboard() {
-  const [isIngested, setIsIngested] = useState(false);
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [hasKbDocs, setHasKbDocs] = useState(false);
   const [nodeStatuses, setNodeStatuses] = useState({});
   const timeoutsRef = useRef([]);
 
-  const handleIngested = useCallback(() => {
-    setIsIngested(true);
+  const handleSelectChat = useCallback((chatId) => {
+    setActiveChatId(chatId);
     setNodeStatuses({});
+  }, []);
+
+  const handleKbChange = useCallback(() => {
+    setHasKbDocs(true);
   }, []);
 
   // Simulate node-by-node execution animation
@@ -60,43 +65,64 @@ export default function Dashboard() {
   }, [simulateExecution]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden">
-      {/* ── Top bar ──────────────────────────────── */}
-      <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-subtle bg-surface/60 backdrop-blur-md relative z-30 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Cpu size={18} className="text-white" />
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar with KB + Chats */}
+      <Sidebar activeChatId={activeChatId} onSelectChat={handleSelectChat} onKbChange={handleKbChange} />
+
+      {/* Main area */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* ── Top bar ──────────────────────────────── */}
+        <header className="h-14 shrink-0 flex items-center justify-between px-6 border-b border-subtle bg-surface/60 backdrop-blur-md relative z-30 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Cpu size={18} className="text-white" />
+            </div>
+            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              CRAG Pipeline
+            </h1>
+            <span className="text-[10px] font-medium text-txt-muted bg-card px-2 py-0.5 rounded-full border border-subtle">
+              v2.0
+            </span>
           </div>
-          <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            CRAG Pipeline
-          </h1>
-          <span className="text-[10px] font-medium text-txt-muted bg-card px-2 py-0.5 rounded-full border border-subtle">
-            v1.0
-          </span>
-        </div>
 
-        <div className="flex items-center gap-2 text-xs text-txt-muted">
-          <Zap size={12} className={isIngested ? 'text-emerald-400' : 'text-txt-muted'} />
-          <span>{isIngested ? 'Data ingested — Ready to query' : 'No data ingested'}</span>
-        </div>
-      </header>
+          <div className="flex items-center gap-2 text-xs text-txt-muted">
+            {activeChatId ? (
+              <>
+                <Zap size={12} className="text-emerald-400" />
+                <span>Querying your Knowledge Base</span>
+              </>
+            ) : (
+              <span>Upload docs to KB, then create a chat</span>
+            )}
+          </div>
+        </header>
 
-      {/* ── Main 3-column layout ─────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* LEFT — Upload */}
-        <aside className="w-80 shrink-0 border-r border-subtle bg-surface/40 backdrop-blur-2xl overflow-hidden relative z-20 shadow-[8px_0_32px_-12px_rgba(0,0,0,0.5)]">
-          <UploadPanel onIngested={handleIngested} />
-        </aside>
+        {/* ── Content ───────────────────────────────── */}
+        {!activeChatId ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-card border border-subtle flex items-center justify-center mx-auto mb-4">
+                <Database size={28} className="text-txt-muted" />
+              </div>
+              <h2 className="text-lg font-semibold text-txt mb-2">No chat selected</h2>
+              <p className="text-sm text-txt-sec max-w-sm">
+                Upload documents to your Knowledge Base in the sidebar, then create a chat to start asking questions.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-1 overflow-hidden">
+            {/* LEFT — Graph */}
+            <main className="flex-1 bg-transparent relative z-10">
+              <GraphViewer nodeStatuses={nodeStatuses} />
+            </main>
 
-        {/* CENTER — Graph */}
-        <main className="flex-1 bg-transparent relative z-10">
-          <GraphViewer nodeStatuses={nodeStatuses} />
-        </main>
-
-        {/* RIGHT — Query */}
-        <aside className="w-96 shrink-0 border-l border-subtle bg-surface/40 backdrop-blur-2xl overflow-hidden relative z-20 shadow-[-8px_0_32px_-12px_rgba(0,0,0,0.5)]">
-          <QueryPanel onQueryResult={handleQueryResult} isIngested={isIngested} />
-        </aside>
+            {/* RIGHT — Query */}
+            <aside className="w-[420px] shrink-0 border-l border-subtle bg-surface/40 backdrop-blur-2xl overflow-hidden relative z-20 shadow-[-8px_0_32px_-12px_rgba(0,0,0,0.5)]">
+              <QueryPanel onQueryResult={handleQueryResult} isIngested={true} chatId={activeChatId} />
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );
