@@ -68,4 +68,7 @@ C_RAG.zip
 *.m4a
 
 .playwright-mcp/
+backend/notebooks/temp_rag.ipynb
+deployment_guild/
+
 
