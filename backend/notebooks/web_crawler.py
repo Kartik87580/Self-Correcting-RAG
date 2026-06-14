@@ -40,4 +40,5 @@ async def main(url: str) -> str:
         print(f'content length: {len(data["content"])}')
         print("******************************************")
     return content
-# asyncio.run(main())
+
+asyncio.run(main("https://en.wikipedia.org/wiki/Blog"))

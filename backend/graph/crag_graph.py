@@ -28,12 +28,13 @@ RET_LIMIT = 3
 TAVILY_LIMIT = 1
 UPPER_TH = 0.7
 LOWER_TH = 0.3
+LLM_MODEL = "llama-3.3-70b-versatile"
 
 # -------------------------------------------------------------------
 # LLM (same as Notebook 4)
 # -------------------------------------------------------------------
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model=LLM_MODEL,
     api_key=os.getenv("GROQ_API_KEY"),
     temperature=0.7
 )
