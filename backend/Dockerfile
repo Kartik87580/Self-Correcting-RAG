@@ -5,7 +5,10 @@ ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 
 # Install system dependencies for PDF processing & ML
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 && \
+    apt-get clean && \
+    apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
     build-essential \
     libgl1-mesa-glx \
     libglib2.0-0 \
