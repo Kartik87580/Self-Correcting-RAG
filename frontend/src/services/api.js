@@ -1,15 +1,14 @@
 import axios from 'axios';
 
-// In production, API calls go directly to the backend URL.
-// In development, Vite proxy handles /api → localhost:8000
+// Use environment variable VITE_API_URL if provided, else dev proxy '/api' or production backend URL
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://corrective-rag.duckdns.org');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: API_BASE_URL,
   timeout: 120000,
 });
-// const api  = axios.create({
-//   baseURL : 'http://3.107.201.111:8000',
-//   timeout : 120000,
-// })
 
 // Attach token from localStorage on every request
 api.interceptors.request.use((config) => {
