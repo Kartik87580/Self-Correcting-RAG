@@ -130,7 +130,7 @@ jobs:
   #         tags: |
   #           ${{ env.IMAGE_NAME }}:latest
   #           ${{ env.IMAGE_NAME }}:${{ github.sha }}
-   build-and-push:
+  build-and-push:
     name: 🐳 Build and Push Backend
     runs-on: ubuntu-latest
 
