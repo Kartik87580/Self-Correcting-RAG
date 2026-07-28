@@ -2,10 +2,14 @@ import axios from 'axios';
 
 // In production, API calls go directly to the backend URL.
 // In development, Vite proxy handles /api → localhost:8000
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  timeout: 120000,
-});
+// const api = axios.create({
+//   baseURL: import.meta.env.VITE_API_URL || '/api',
+//   timeout: 120000,
+// });
+const api  = axios.create({
+  baseURL : 'http://localhost:8000',
+  timeout : 120000,
+})
 
 // Attach token from localStorage on every request
 api.interceptors.request.use((config) => {

@@ -12,7 +12,8 @@ from contextlib import asynccontextmanager
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # NOTE: Router imports are lightweight — heavy ML models inside them
@@ -52,8 +53,11 @@ app = FastAPI(
 )
 
 # CORS — configurable via env var for production
-cors_origins = os.getenv("CORS_ORIGINS", "*")
-origins = [o.strip() for o in cors_origins.split(",")] if cors_origins != "*" else ["*"]
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+if cors_origins_env == "*":
+    origins = ["*"]
+else:
+    origins = [o.strip().rstrip("/") for o in cors_origins_env.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -70,6 +74,15 @@ app.include_router(chats_router, prefix="/chats", tags=["Chats"])
 app.include_router(ingest_router, tags=["Ingest"])
 app.include_router(query_router, tags=["Query"])
 app.include_router(graph_router, tags=["Graph"])
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+    )
 
 
 @app.get("/health")

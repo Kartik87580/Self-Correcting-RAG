@@ -6,11 +6,14 @@ import os
 import tempfile
 import sys
 import asyncio
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Optional, List
+
+logger = logging.getLogger("uvicorn.error")
 
 from core.database import get_db
 from core.auth import decode_token, oauth2_scheme
@@ -113,17 +116,31 @@ async def upload_document(
     # Step 4: Store in user's KB collection
     from services.vectorstore import store_chunks
     col = _kb_collection(user_id)
-    num_stored = store_chunks(chunks, collection_name=col)
+    try:
+        num_stored = store_chunks(chunks, collection_name=col)
+    except Exception as e:
+        logger.error(f"Error storing vectors in Qdrant: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Vector store error: {str(e)}"
+        )
 
     # Step 5: Save document record in DB
-    doc = Document(
-        user_id=user_id,
-        filename=filename,
-        source_type=source_type or "unknown",
-        chunk_count=num_stored,
-    )
-    db.add(doc)
-    await db.commit()
+    try:
+        doc = Document(
+            user_id=user_id,
+            filename=filename,
+            source_type=source_type or "unknown",
+            chunk_count=num_stored,
+        )
+        db.add(doc)
+        await db.commit()
+    except Exception as e:
+        logger.error(f"Error saving document to database: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error: {str(e)}"
+        )
 
     return IngestResponse(
         status="success",
