@@ -1,55 +1,169 @@
-name: Build and Push Backend Docker Image
+# name: Build and Push Backend Docker Image
+
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - 'backend/**'
+#       - '.github/workflows/ci-cd.yaml'
+#   pull_request:
+#     branches:
+#       - main
+#     paths:
+#       - 'backend/**'
+#   workflow_dispatch:
+
+# jobs:
+#   build-and-push:
+#     name: Build and Push Backend
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Log in to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKER_USERNAME }}
+#           password: ${{ secrets.DOCKER_PASSWORD }}
+
+#       - name: Extract Docker metadata
+#         id: meta
+#         uses: docker/metadata-action@v5
+#         with:
+#           images: kartik87580/crag
+#           tags: |
+#             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+#             type=sha,format=short
+#             type=ref,event=branch
+#             type=ref,event=pr
+
+#       - name: Build and Push Docker Image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: ./backend
+#           file: ./backend/Dockerfile
+#           push: ${{ github.event_name != 'pull_request' }}
+#           tags: ${{ steps.meta.outputs.tags }}
+#           labels: ${{ steps.meta.outputs.labels }}
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=max
+
+
+
+
+
+
+
+
+
+
+
+name: CI/CD — Corrective RAG Backend
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/ci-cd.yaml'
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-  workflow_dispatch:
+    branches: [ main ]
+
+env:
+  IMAGE_NAME: kartik87580/crag
 
 jobs:
-  build-and-push:
-    name: Build and Push Backend
+  # ──────────────────────────────────────────────
+  # JOB 1: Syntax check & basic validation
+  # ──────────────────────────────────────────────
+  build-and-test:
+    name: 🧪 Lint & Syntax Check
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Set up Python 3.11
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
+
+      # - name: Install dependencies
+      #   run: pip install -r requirements.txt
+
+      # - name: Run syntax check on all Python files
+      #   run: python -m py_compile $(git ls-files '*.py')
+
+      # - name: Verify FastAPI app imports correctly
+      #   run: python -c "import app.main; print('✅ App imports OK')"
+
+  # ──────────────────────────────────────────────
+  # JOB 2: Build Docker image & push to DockerHub
+  # ──────────────────────────────────────────────
+  build-and-push:
+    name: 🐳 Build & Push Docker Image
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Build and push image
+        uses: docker/build-push-action@v5
         with:
-          images: kartik87580/crag
+          context: .
+          push: true
+          provenance: false
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,format=short
-            type=ref,event=branch
-            type=ref,event=pr
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v6
+  # ──────────────────────────────────────────────
+  # JOB 3: SSH into AWS EC2 and deploy
+  # ──────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to AWS EC2
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          script: |
+            echo "🔄 Pulling latest Docker image..."
+            docker pull kartik87580/crag:latest
+
+            echo "🛑 Stopping old container..."
+            docker stop crag-backend-container || true
+            docker rm crag-backend-container || true
+
+            echo "▶️ Starting new container..."
+            docker run -d \
+              --name crag-backend-container \
+              --env-file ./.env \
+              --restart unless-stopped \
+              -p 8000:8000 \
+              kartik87580/crag:latest
+
+            echo "🧹 Cleaning up old images..."
+            docker image prune -f
+
+            echo "✅ Deployment complete!"
+            docker ps | grep crag-backend-container

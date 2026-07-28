@@ -52,16 +52,21 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
-# CORS — configurable via env var for production
-cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
-if cors_origins_env == "*":
-    origins = ["*"]
-else:
-    origins = [o.strip().rstrip("/") for o in cors_origins_env.split(",") if o.strip()]
+# CORS — configurable via env var for production with automatic Vercel & localhost support
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+custom_origins = [o.strip().rstrip("/") for o in cors_origins_env.split(",") if o.strip() and o.strip() != "*"]
+
+default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://self-correcting-rag-one.vercel.app",
+]
+all_origins = list(set(custom_origins + default_origins))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=all_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
